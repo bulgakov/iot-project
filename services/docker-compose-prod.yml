@@ -1,0 +1,106 @@
+version: "3.8"
+volumes:
+  vol-emqx-data:
+    name: emqx-data
+  # vol-emqx-etc:
+  #   name: emqx-etc
+  vol-emqx-log:
+    name: emqx-log
+
+services: 
+  node:
+    container_name: node
+    image: "node:14"
+    restart: always
+    working_dir: /home/node/app
+    volumes:
+      - ./mycode/index.js:/home/node/app/index.js
+    ports:
+      - 3000:3000
+      - 3001:3001
+      -   80:3002
+    links:
+      - emqx
+      - mongo
+    command: sh -c "npm build & npm start"
+  mongo:
+    container_name: mongo
+    image: mongo:4.4.10
+    restart: always
+    environment:
+      TZ: "${TZ}"
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USER}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASS}"
+      MONGO_INITDB_DATABASE: "${MONGO_INITDB}"
+    volumes:
+      - ./mongodata:/data/db
+    ports:
+      - ${MONGO_EXT_PORT}:27017
+  
+  emqx:
+    container_name: emqx
+    image: emqx/emqx:4.2.14
+    restart: always
+    ports: 
+      - 1883:1883
+      - 18083:18083
+      - 18084:18084
+      - 8081:8081
+      - 8083:8083
+      - 8084:8084
+      - 8883:8883
+    volumes:
+      - vol-emqx-data:/opt/emqx/data
+      # - vol-emqx-etc:/opt/emqx/etc
+      - vol-emqx-log:/opt/emqx/log
+    links: 
+      - mongo
+    extra_hosts:
+      - "localhost:192.168.1.100"
+    environment: 
+      EMQX_NAME: emqx-dev
+      EMQX_HOST: 127.0.0.1
+
+      TZ: "${TZ}"
+
+      EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "${EMQX_DEFAULT_USER_PASS}"
+      EMQX_MANAGEMENT__DEFAULT_APPLICATION__PASSWORD: "${EMQX_DEFAULT_APP_PASS}"
+      EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "${EMQX_DEFAULT_APP_SECRET}"
+      # OTHER CONFIGS
+      EMQX_ALLOW_ANONYMOUS: "false"
+      EMQX_ACL_NOMATCH: "deny"
+      EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
+      EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_management,emqx_dashboard,emqx_auth_mongo"
+      # AUTH MONGO
+      EMQX_AUTH__MONGO__TYPE: single
+      EMQX_AUTH__MONGO__TOPOLOGY__POLL_SIZE: 1
+      EMQX_AUTH__MONGO__TOPOLOGY__MAX_OVERFLOW: 0
+      # MONGO CONNECTION
+      EMQX_AUTH__MONGO__SERVER: "mongo:${MONGO_EXT_PORT}"
+      EMQX_AUTH__MONGO__POOL: 8
+      EMQX_AUTH__MONGO__LOGIN: "${MONGO_ROOT_USER}"
+      EMQX_AUTH__MONGO__PASSWORD: "${MONGO_ROOT_PASS}"
+      EMQX_AUTH__MONGO__AUTH_SOURCE: admin
+      EMQX_AUTH__MONGO__DATABASE: "${MONGO_INITDB}"
+      #EMQX_AUTH__MONGO__AUTH_QUERY: "off"
+      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_FIELD: "password"
+      EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
+      # AUTH SUPER
+      EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+      # AUTH ACL
+      EMQX_AUTH__MONGO__ACL_QUERY: "on"
+      EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
+
+      # {
+      #     "username": "admin",
+      #     "password": "changeit",
+      #     "is_superuser": true,
+      #     "subscribe": ["#"],
+      #     "publish": ["#"]
+      # }
