@@ -80,8 +80,8 @@
 <script>
 import { Select, Option } from "element-ui";
 import { Table, TableColumn } from "element-ui";
-import { BFormSelect, BFormSelectOption } from "Bootstrap-Vue";
-import { BTable } from "Bootstrap-Vue";
+import { BFormSelect, BFormSelectOption } from "bootstrap-Vue";
+import { BTable } from "bootstrap-Vue";
 
 export default {
     components: {
