@@ -14,7 +14,8 @@
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
 // Polyfills for js features used in the Dashboard but not supported in some browsers (mainly IE)
-import Vue from 'vue'
+import Vue from 'vue';
+import BootstrapVue from 'bootstrap-vue';
 import './extra/polyfills';
 // Notifications plugin. Used on Notifications page
 import Notifications from '@/components/NotificationPlugin';
@@ -33,7 +34,7 @@ import VComp from "@vue/composition-api";
 import lang from 'element-ui/lib/locale/lang/en';
 import locale from 'element-ui/lib/locale';
 locale.use(lang);
-
+Vue.use(BootstrapVue);
 Vue.use(VComp);
 Vue.use(RTLPlugin);
 Vue.use(SideBar);

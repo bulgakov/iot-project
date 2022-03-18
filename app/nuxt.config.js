@@ -83,6 +83,11 @@ export default {
     '/api': '~/api'
   },
   
+  bootstrapVue: {
+    icons: true,
+    componentPlugins: ['IconsPlugin'],
+  },
+
   // i18n module configuration: https://i18n.nuxtjs.org/
   i18n: {
     strategy: 'no_prefix',

@@ -80,8 +80,8 @@
 <script>
 import { Select, Option } from "element-ui";
 import { Table, TableColumn } from "element-ui";
-import { BFormSelect, BFormSelectOption } from "bootstrap-Vue";
-import { BTable } from "bootstrap-Vue";
+//import { BFormSelect, BFormSelectOption } from "bootstrap-Vue";
+//import { BTable } from "bootstrap-Vue";
 
 export default {
     components: {
@@ -89,9 +89,9 @@ export default {
         [Select.name]: Select,
         [Table.name]: Table,
         [TableColumn.name]: TableColumn,
-        [BFormSelect.name]: BFormSelect,
-        [BFormSelectOption.name]: BFormSelectOption,
-        [BTable.name]: BTable
+        // [BFormSelect.name]: BFormSelect,
+        // [BFormSelectOption.name]: BFormSelectOption,
+        // [BTable.name]: BTable
     },
     middleware: "authenticated",
     data() {
