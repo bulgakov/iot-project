@@ -295,8 +295,8 @@ function sendMqttNotification(alarm) {
 
 function startMqttClient() {
     var options = {
-        port: process.env.MQTT_PORT,
-        host: process.env.MQTT_TCP_PORT,
+        port: process.env.MQTT_TCP_PORT,
+        host: process.env.MQTT_HOST,
         clientId: 'webhook_user' + Math.round(Math.random() * 10000),
         username: process.env.EMQX_SUPERUSER_USER,
         password: process.env.EMQX_SUPERUSER_PASS,

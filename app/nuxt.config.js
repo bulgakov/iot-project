@@ -69,8 +69,8 @@ export default {
   },
 
   env: {
-    mqtt_ssl_prefix: process.env.EMQX_SSL_PREFIX,
-    mqtt_host: process.env.EMQX_HOST,
+    mqtt_ssl_prefix: process.env.MQTT_SSL_PREFIX,
+    mqtt_host: process.env.MQTT_HOST,
     mqtt_ws_port: process.env.MQTT_WS_PORT,
   },
 

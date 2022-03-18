@@ -139,20 +139,20 @@ global.check_mqtt_superuser = async function checkMqttSuperuser() {
 
         if (superusers.length == 0) {
             await EmqxAuthRule.create({
-                userId: 'admin',
-                username: process.env.SUPERUSER_USER,
-                password: process.env.SUPERUSER_PASS,
+                userId: process.env.EMQX_SUPERUSER_USER,
+                username: process.env.EMQX_SUPERUSER_USER,
+                password: process.env.EMQX_SUPERUSER_PASS,
                 publish: [userId + '/#'],
                 subscribe: [userId + '/#'],
                 type: 'admin',
-                time: Date.now(),
+                createdTime: Date.now(),
                 updatedTime: Date.now(),
             });
             console.log('Mqtt admin user created!');
         }
     } catch (error) {
         console.log('**** ERROR EQMXAPI checkMqttSuperuser ****');
-        console.log(err);
+        console.log(error);
     }
 }
 
