@@ -69,6 +69,7 @@ router.post('/', checkAuth, async (req, res) => {
         newDevice.userId = userId;
         newDevice.createdTime = Date.now();
         newDevice.password = makeid(10);
+        newDevice.status = false;
 
         var device = await Device.create(newDevice);
         await createSaveRule(userId, newDevice.deviceId, false);

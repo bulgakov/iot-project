@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require('axios');
 const { checkAuth } = require('../auth.js');
+const { default: EmqxAuthRule } = require("../models/emqx_auth_rule.js");
 //const { fcumsum } = require("d3");
 //const { BIconExclamationSquareFill } = require("bootstrap-vue");
 
@@ -80,7 +81,7 @@ async function createResources() {
         var dataSaver = {
             type: 'web_hook',
             config: {
-                url: 'http://192.168.1.100:3001/api/webhooks/saver',
+                url: process.env.API_URL + '/webhooks/saver',
                 headers: {
                     token: process.env.API_TOKEN
                 },
@@ -92,7 +93,7 @@ async function createResources() {
         var dataAlarm = {
             type: 'web_hook',
             config: {
-                url: 'http://192.168.1.100:3001/api/webhooks/alarm',
+                url: process.env.API_URL + '/webhooks/alarm',
                 headers: {
                     token: process.env.API_TOKEN
                 },
@@ -121,7 +122,7 @@ async function createResources() {
 
         setTimeout(() => {
             listResources();
-        }, 1000);
+        }, process.env.EMQX_RESOURCES_DELAY);
     } catch (error) {
         console.log('**** ERROR EQMXAPI createResources ****');
         console.log(err);
@@ -130,6 +131,29 @@ async function createResources() {
 
 setTimeout(() => {
     listResources();
-}, 1000);
+}, process.env.EMQX_RESOURCES_DELAY);
+
+global.check_mqtt_superuser = async function checkMqttSuperuser() {
+    try {
+        var superusers = await EmqxAuthRule.find({ type: 'admin' });
+
+        if (superusers.length == 0) {
+            await EmqxAuthRule.create({
+                userId: 'admin',
+                username: process.env.SUPERUSER_USER,
+                password: process.env.SUPERUSER_PASS,
+                publish: [userId + '/#'],
+                subscribe: [userId + '/#'],
+                type: 'admin',
+                time: Date.now(),
+                updatedTime: Date.now(),
+            });
+            console.log('Mqtt admin user created!');
+        }
+    } catch (error) {
+        console.log('**** ERROR EQMXAPI checkMqttSuperuser ****');
+        console.log(err);
+    }
+}
 
 module.exports = router;

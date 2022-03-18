@@ -73,6 +73,15 @@ export default {
     mqtt_host: process.env.EMQX_HOST,
     mqtt_ws_port: process.env.MQTT_WS_PORT,
   },
+
+  server: {
+    port: process.env.APP_PORT, // default: 3000
+    host: process.env.APP_HOST // default: localhost
+  },
+
+  serverMiddleware: {
+    '/api': '~/api'
+  },
   
   // i18n module configuration: https://i18n.nuxtjs.org/
   i18n: {

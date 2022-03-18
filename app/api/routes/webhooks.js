@@ -308,7 +308,7 @@ function startMqttClient() {
         encoding: 'utf8'
     };
 
-    var mqttUrl = 'mqtt://' + options.host;
+    var mqttUrl = process.env.MQTT_SSL_TCP + options.host;
 
     mqttClient = mqtt.connect(mqttUrl, options);
 

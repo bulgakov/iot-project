@@ -11,10 +11,10 @@ services:
   node:
     container_name: node
     image: "node:14"
-    restart: always
+    #restart: always
     working_dir: /home/node/app
     volumes:
-      - ./mycode/index.js:/home/node/app/index.js
+      - /home/ubuntu/iot-project/app/:/home/node/app
     ports:
       - 3000:3000
       - 3001:3001
@@ -22,11 +22,12 @@ services:
     links:
       - emqx
       - mongo
-    command: sh -c "npm build & npm start"
+    command: sh -c "echo 'delaying 30 seconds' && sleep 30 && npm run start"
+    #command: sh -c "npm install"
   mongo:
     container_name: mongo
     image: mongo:4.4.10
-    restart: always
+    #restart: always
     environment:
       TZ: "${TZ}"
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USER}"
@@ -40,7 +41,7 @@ services:
   emqx:
     container_name: emqx
     image: emqx/emqx:4.2.14
-    restart: always
+    #restart: always
     ports: 
       - 1883:1883
       - 18083:18083
@@ -96,11 +97,3 @@ services:
       EMQX_AUTH__MONGO__ACL_QUERY: "on"
       EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules"
       EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
-
-      # {
-      #     "username": "admin",
-      #     "password": "changeit",
-      #     "is_superuser": true,
-      #     "subscribe": ["#"],
-      #     "publish": ["#"]
-      # }
