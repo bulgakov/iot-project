@@ -107,6 +107,7 @@ export default {
         
     },
     babel: {
+        compact: true,
         plugins: [
             [
                 'component',
