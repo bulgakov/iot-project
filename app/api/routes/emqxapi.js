@@ -18,7 +18,7 @@ const emqxConfig = {
 };
 
 const url = process.env.EMQX_API_URL + '/resources';
-const urlApi = 'http://' + process.env.API_HOST + ':' + process.env.API_PORT + '/api';
+const urlApi = process.env.API_URL;
 
 global.saverResource = null;
 global.alarmResource = null;
