@@ -18,6 +18,7 @@ const emqxConfig = {
 };
 
 const url = process.env.EMQX_API_URL + '/resources';
+const urlApi = 'http://' + process.env.API_HOST + ':' + process.env.API_PORT + '/api';
 
 global.saverResource = null;
 global.alarmResource = null;
@@ -81,7 +82,7 @@ async function createResources() {
         var dataSaver = {
             type: 'web_hook',
             config: {
-                url: process.env.API_URL + '/webhooks/saver',
+                url: urlApi + '/webhooks/saver',
                 headers: {
                     token: process.env.API_TOKEN
                 },
@@ -93,7 +94,7 @@ async function createResources() {
         var dataAlarm = {
             type: 'web_hook',
             config: {
-                url: process.env.API_URL + '/webhooks/alarm',
+                url: urlApi + '/webhooks/alarm',
                 headers: {
                     token: process.env.API_TOKEN
                 },

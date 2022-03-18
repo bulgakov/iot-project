@@ -6,7 +6,6 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { checkAuth } = require('../auth.js');
 
-import { token } from 'morgan';
 // imports
 import User from '../models/user.js'
 import EmqxAuthRule from '../models/emqx_auth_rule.js'

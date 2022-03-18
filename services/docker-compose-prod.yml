@@ -56,6 +56,7 @@ services:
       - vol-emqx-log:/opt/emqx/log
     links: 
       - mongo
+      - node
     extra_hosts:
       - "localhost:192.168.1.100"
     environment: 
