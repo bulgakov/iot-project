@@ -24,8 +24,31 @@ router.get('/', checkAuth, async (req, res) => {
     try {
         
         var notifications = await Notification.find({ userId: req.userData._id, readed: false });
+        var devices = await Device.find({ userId: req.userData._id });
+        var alarms = await AlarmRule.find({ userId: req.userData._id });
+        var result = [];
 
-        resJson.data = notifications;
+        for (let i = 0; i < notifications.length; i++) {
+            var device = devices.filter(a => a.deviceId == notifications[i].deviceId)[0];
+            var alarm = alarms.filter(a => a.emqxRuleId == notifications[i].emqxRuleId)[0];
+            result.push({
+                _id: notifications[i]._id,
+                userId: notifications[i].userId,
+                deviceId: notifications[i].deviceId,
+                deviceName: device ? device.name : null,
+                emqxRuleId: notifications[i].emqxRuleId,
+                payload: notifications[i].payload,
+                topic: notifications[i].topic,
+                variable: notifications[i].variable,
+                variableName: alarm ? alarm.variableName : null,
+                value: notifications[i].value,
+                condition: notifications[i].condition,
+                readed: notifications[i].readed,
+                createdTime: notifications[i].createdTime
+            });
+        }
+
+        resJson.data = result;
         res.json(resJson);
     } catch (error) {
         console.log(req.method + ' ' + req.baseUrl + ' ' + req.path + ' ERROR:');
@@ -44,12 +67,12 @@ router.put('/', checkAuth, async (req, res) => {
 
     try {
         
-        var res = await Notification.updateOne(
+        var result = await Notification.updateOne(
           { userId: req.userData._id, _id: req.body.id },
           { readed: true }
         );
 
-        resJson.data = res;
+        resJson.data = result;
         res.json(resJson);
     } catch (error) {
         console.log(req.method + ' ' + req.baseUrl + ' ' + req.path + ' ERROR:');

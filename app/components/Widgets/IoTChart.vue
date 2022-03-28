@@ -320,8 +320,6 @@ export default {
             }
         },
         getChartData() {
-            console.log(this.chartData);
-            console.log(this.options);
             if (this.config.demo) {
                 this.chartData.datasets[0].data = [
                     { x: new Date(1606659071668), y: 22 },
@@ -348,7 +346,6 @@ export default {
                 .get('/devices/data', axiosConfig)
                 .then((res) => {
                     if (res.data.status == 'success') {
-                        console.log(res.data);
 
                         this.chartData.datasets[0].data = [];
                         res.data.data.forEach((d) => {

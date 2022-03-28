@@ -66,9 +66,9 @@
           <i class="tim-icons icon-sound-wave"></i>
           <p class="d-lg-none">{{$t('dashboardNavbar.lblNotifications')}}</p>
         </template>
-        <li class="nav-link" v-for="notification in $store.state.notifications" :key="index" @click="readNotification(notification._id)">
+        <li class="nav-link" v-for="notification,index in $store.state.notifications" :key="index" @click="readNotification(notification._id)">
             <a href="#" class="nav-item dropdown-item">
-                {{ getDateString(notification.createTime) }} - <b>{{ notification.deviceName }}</b> {{ notification.variableName }} {{ notification.condition }} {{ notification.value }} : {{ notification.payload.value }}
+                {{ getDateString(notification.createdTime) }} - <b>{{ notification.deviceName }}</b> {{ notification.variableName }} {{ getConditionText(notification.condition) }} {{ notification.value }} : {{ notification.payload.value }}
             </a>
         </li>
         <!-- <li class="nav-link">
@@ -184,6 +184,24 @@ export default {
       } else {
         docClasses.add('white-content');
       }
+    },
+    getConditionText(value) {
+        switch (value) {
+            case 'gt' : 
+                return '>' ;
+            case 'eq' : 
+                return '=' ;
+            case 'get': 
+                return '>=';
+            case 'lt' : 
+                return '<' ;
+            case 'let': 
+                return '<=';
+            case 'neq': 
+                return '!=';
+            default:
+                return null;
+        }
     },
     getDateString(ms) {
         var d = new Date(ms);

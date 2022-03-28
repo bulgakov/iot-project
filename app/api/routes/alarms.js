@@ -48,6 +48,18 @@ router.post('/', checkAuth, async (req, res) => {
     };
 
     try {
+        if (!Array.isArray(req.body.actions)) {
+            resJson.status = "failed";
+            resJson.error = 'Actions array is required'
+            res.status(500).json(resJson);
+        }
+
+        if (Array.isArray(req.body.actions) && req.body.actions.length == 0) {
+            resJson.status = "failed";
+            resJson.error = 'Actions array is required'
+            res.status(500).json(resJson);
+        }
+
         var userId = req.userData._id;
         var newRule = req.body;
         newRule.userId = userId;
@@ -62,28 +74,6 @@ router.post('/', checkAuth, async (req, res) => {
             resJson.status = "failed";
             res.status(500).json(resJson);
         }
-    } catch (error) {
-        console.log(req.method + ' ' + req.baseUrl + ' ' + req.path + ' ERROR:');
-        console.log(error);
-
-        resJson.status = "failed";
-        resJson.error= error;
-        res.status(500).json(resJson);
-    }
-});
-
-router.put('/', checkAuth, async (req, res) => {
-    var resJson = {
-        status: "success"
-    };
-
-    try {
-        // var result = await selectDevice(req.userData._id, req.body.deviceId);
-        // if (!result) {
-        //     resJson.status = "failed";
-        // }
-
-        res.json(resJson);
     } catch (error) {
         console.log(req.method + ' ' + req.baseUrl + ' ' + req.path + ' ERROR:');
         console.log(error);
@@ -145,23 +135,62 @@ async function createAlarmRule(newAlarm) {
             'FROM "' + topic + '" ' + 
             'WHERE is_not_null(payload.value) AND ' + 
             getConditionValue('payload.value', newAlarm.condition, newAlarm.value);
+        var actions = [];
+
+        //  Actions => EMQX Actions
+        //  notify   -> data_to_webserver
+        //  actuator -> republish
+        //  nothing  -> do_nothing
+        //  everything else -> do_nothing
+        newAlarm.actions.forEach(action => {
+            switch (action.type) {
+                case 'notify':
+                    actions.push({
+                        name: 'data_to_webserver',
+                        params: {
+                            $resource: global.alarmResource.id,
+                            payload_tmpl:
+                                '{ ' +
+                                    '"userId": "' + newAlarm.userId + '",' +
+                                    '"payload": ${payload},' +
+                                    '"topic": "${topic}"' +
+                                '}'
+                        }
+                    });
+                    break;
+                case 'actuator':
+                    // actuator topic
+                    var actuatorTopic = 
+                        newAlarm.userId + '/' + 
+                        newAlarm.deviceId + '/' + 
+                        action.variable + '/actdata';
+                    
+                    actions.push({
+                        name: 'republish',
+                        params: {
+                            target_topic: actuatorTopic,
+                            target_qos: 0,
+                            payload_tmpl:
+                                '{ ' +
+                                    '"userId": "' + newAlarm.userId + '",' +
+                                    '"payload": ${payload},' +
+                                    '"topic": "${topic}"' +
+                                '}'
+                        }
+                    });
+                    break;         
+                default: // in case try to tamper create action to nothing 
+                    actions.push({
+                        name: 'do_nothing',
+                        params: {}
+                    });
+                    break;
+            }
+        });
 
         var newRule = {
             rawsql: rawsql,
-            actions: [
-                {
-                    name: 'data_to_webserver',
-                    params: {
-                        $resource: global.saverResource.id,
-                        payload_tmpl:
-                            '{ ' +
-                                '"userId": "' + newAlarm.userId + '",' +
-                                '"payload": ${payload},' +
-                                '"topic": "${topic}"' +
-                            '}'
-                    }
-                }
-            ],
+            actions: actions,
             description: 'ALARM-RULE',
             enabled: newAlarm.status
         };
@@ -179,26 +208,50 @@ async function createAlarmRule(newAlarm) {
                 value: newAlarm.value,
                 condition: newAlarm.condition,
                 triggerTime: newAlarm.triggerTime,
+                actions: newAlarm.actions,
                 status: newAlarm.status,
                 counter: 0,
                 createdTime: Date.now()
             });
 
-            var payload_tmpl =
-            '{ ' +
-                '"userId": "' + alarm.userId + '",' +
-                '"deviceId": "' + alarm.deviceId + '",' +
-                '"payload": ${payload},' +
-                '"topic": "${topic}",' +
-                '"emqxRuleId": "' + alarm.emqxRuleId + '",' +
-                '"value": ' + alarm.value + ',' +
-                '"condition": "' + alarm.condition + '",' +
-                '"variable": "' + alarm.variable + '",' +
-                '"variableName": "' + alarm.variableName + '",' +
-                '"triggerTime": ' + alarm.triggerTime +
-            '}';
-
-            newRule.actions[0].params.payload_tmpl = payload_tmpl;
+            // Update actions template
+            // WARNING - Doesnt work for mutiple actions of actuator
+            for (let i = 0; i < newRule.actions.length; i++) {
+                switch (newRule.actions[i].name) {
+                    case 'data_to_webserver':
+                        var payload_tmpl =
+                        '{ ' +
+                            '"userId": "' + alarm.userId + '",' +
+                            '"deviceId": "' + alarm.deviceId + '",' +
+                            '"payload": ${payload},' +
+                            '"topic": "${topic}",' +
+                            '"emqxRuleId": "' + alarm.emqxRuleId + '",' +
+                            '"value": ' + alarm.value + ',' +
+                            '"condition": "' + alarm.condition + '",' +
+                            '"variable": "' + alarm.variable + '",' +
+                            '"variableName": "' + alarm.variableName + '",' +
+                            '"triggerTime": ' + alarm.triggerTime +
+                        '}';
+                        newRule.actions[i].params.payload_tmpl = payload_tmpl;
+                        break;
+                    case 'republish':
+                        // Retrieve Value from action
+                        var actuatorTopic = newRule.actions[i].params.target_topic;
+                        var actuatorId = actuatorTopic.split('/')[2];
+                        var action = newAlarm.actions.filter(t => t.type == 'actuator' && t.variable == actuatorId)[0];
+                        var payload_tmpl =
+                        '{ ' +
+                            '"payload": ${payload},' +
+                            '"topic": "${topic}",' +
+                            '"emqxRuleId": "' + alarm.emqxRuleId + '",' +
+                            '"value": ' + action.value + ',' +
+                        '}';
+                        newRule.actions[i].params.payload_tmpl = payload_tmpl;
+                        break;
+                    default:
+                        break;
+                }
+            }
             
             var  resEMQXUpdate = await axios.put(apiUrl + '/' + alarm.emqxRuleId, newRule, emqxConfig);
 
@@ -242,8 +295,8 @@ async function deleteAlarmRule(userId, emqxRuleId) {
         
         if (rule) {
             var res = await axios.delete(apiUrl + '/' + rule.emqxRuleId, emqxConfig);
-
-            if (res.status === 200 && res.data.data) {
+            console.log(res.data);
+            if (res.status === 200 && res.data) {
                 var deleted = await AlarmRule.deleteOne({ userId: userId, emqxRuleId: emqxRuleId });
 
                 return deleted;

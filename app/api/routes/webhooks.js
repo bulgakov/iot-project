@@ -64,12 +64,18 @@ router.post('/alarm', async (req, res) => {
     };
 
     try {
+        
         if (req.headers.token != process.env.API_TOKEN) {
             res.sendStatus(404);
             return;
         }
 
         var data = req.body;
+
+        if (data.emqxRuleId == 'undefined') {
+            res.json(resJson);
+            return;
+        }
 
         updateAlarmCounter(data.emqxRuleId);
         
@@ -85,8 +91,8 @@ router.post('/alarm', async (req, res) => {
             sendMqttNotification(data);
         } else {
             var lastNotificationTime = Date.now() - lastNotification[0].createdTime; //millis
-
-            if (lastNotificationTime > data.triggerTime) {
+            var triggerTime = data.triggerTime * 1000;
+            if (lastNotificationTime > triggerTime) {
                 saveNotification(data);
                 sendMqttNotification(data);
             }
@@ -280,12 +286,13 @@ function sendMqttNotification(alarm) {
             alarm.deviceId + '/' + 
             alarm.variable + '/notif';
 
-        var msg = 'The rule: when the ' + 
-            alarm.variableName + ' is ' + 
-            alarm.condition + ' than ' + 
-            alarm.value;
+        var msg = {
+            variableName: alarm.variableName,
+            condition: alarm.condition,
+            value: alarm.value
+        };
 
-            mqttClient.publish(topic, msg);
+        mqttClient.publish(topic, JSON.stringify(msg));
     } catch (error) {
         console.log('**** ERROR WEBHOOKS sendMqttNotification ****');
         console.log(error);

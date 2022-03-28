@@ -8,6 +8,9 @@
                     </div>
                     <div class="row">
                         <div class="col-3">
+                            <slot name="label">
+                                <label>{{$t('alarms.inVariable')}}</label>
+                            </slot>
                             <b-form-select v-model="selectedWidgetIndex" class="text-light" variant="outline-dark" required>
                                 <template #first>
                                     <b-form-select-option :value="null" disabled>{{ $t('alarms.inVariableEmpty') }}</b-form-select-option>
@@ -16,6 +19,9 @@
                             </b-form-select>
                         </div>
                         <div class="col-3">
+                            <slot name="label">
+                                <label>{{$t('alarms.inCondition')}}</label>
+                            </slot>
                             <b-form-select v-model="newRule.condition" :options="conditions" value-field="value" text-field="text" class="text-light" variant="outline-dark" required>
                                 <template #first>
                                     <b-form-select-option :value="null" disabled>{{ $t('alarms.inConditionEmpty') }}</b-form-select-option>
@@ -29,10 +35,62 @@
                             <base-input type="number" :label="$t('alarms.inTriggerTime')" v-model="newRule.triggerTime" />
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <card>
+                                <div slot="header">
+                                    <h4 class="card-title">{{ $t('alarms.titleActions') }} ({{newRule.actions.length}})</h4>
+                                </div>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <slot name="label">
+                                            <label>{{$t('alarms.inActionType')}}</label>
+                                        </slot>
+                                        <b-form-select v-model="newAction.type" :options="actions" value-field="value" text-field="text" class="text-light" variant="outline-dark" required>
+                                            <template #first>
+                                                <b-form-select-option :value="null" disabled>{{ $t('alarms.inActionTypeEmpty') }}</b-form-select-option>
+                                            </template>
+                                        </b-form-select>
+                                    </div>
+                                    <div class="col-4" v-if="newAction.type && isActuator(newAction.type)">
+                                        <slot name="label">
+                                            <label>{{$t('alarms.inActuator')}}</label>
+                                        </slot>
+                                        <b-form-select v-model="newAction.variable" class="text-light" variant="outline-dark">
+                                            <template #first>
+                                                <b-form-select-option :value="null" disabled>{{ $t('alarms.ininActuatorEmpty') }}</b-form-select-option>
+                                                <b-form-select-option v-for="widget,index in getActuators()" :key="index" :value="widget" >{{ widget.variableName }}</b-form-select-option>
+                                            </template>
+                                        </b-form-select>
+                                    </div>
+                                    <div class="col-4" v-if="newAction.type && isActuator(newAction.type)">
+                                        <base-input type="text" :label="$t('alarms.inValue')" v-model="newAction.value"/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <base-button type="success" size="sm" @click="addAction()" >{{ $t('alarms.btnAddAction') }}</base-button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <b-table striped hover :items="newRule.actions" :fields="actionFields" :small="true">
+                                        <template #cell(type)="row">
+                                            {{ getActionText(row.value) }}
+                                        </template>
+                                        <template #cell(actions)="row">
+                                            <base-button class="btn-link" type="danger" icon size="sm" @click="removeAction(row.item, row.index, $event.target)">
+                                                <i class="tim-icons icon-simple-remove"></i>
+                                            </base-button>
+                                        </template>
+                                    </b-table>
+                                </div>
+                            </card>
+                        </div>
+                    </div>
                     <br/>
                     <br/>
                     <div class="row pull-right">
-                        <div class="col-12">
+                        <div class="col-12" v-if="newRule.actions.length > 0">
                             <base-button native-type="submit" type="primary" class="mb3 pull-right" size="lg" @click="createAlarm()" >{{ $t('alarms.btnAddAlarm') }}</base-button>
                         </div>
                     </div>
@@ -55,6 +113,9 @@
                                 {{ getConditionText(row.value) }}
                             </template>
                             <template #cell(actions)="row">
+                                <div v-for="action,index in row.value" :key="index">{{ getActionText(action.type) }}</div>
+                            </template>
+                            <template #cell(options)="row">
                                 <i  class="fas fa-database "
                                     :class="{
                                         'text-success': row.item.status,
@@ -104,18 +165,35 @@ export default {
                 { value: 'let', text: '<=' },
                 { value: 'neq', text: '!=' }
             ],
+            actions: [
+                { value: 'notify',  text: this.$i18n.t('alarms.txtActionNotify') },
+                { value: 'actuator',  text: this.$i18n.t('alarms.txtActionActuator') }
+            ],
+            actionFields: [
+                { key: 'type', label: this.$i18n.t('alarms.tblActionType'), sortable: false},
+                { key: 'variableName', label: this.$i18n.t('alarms.tblVariableName'), sortable: false},
+                { key: 'variable', label: this.$i18n.t('alarms.tblVariable'), sortable: false},
+                { key: 'value', label: this.$i18n.t('alarms.tblValue'), sortable: false, class: 'text-center'},
+                { key: 'actions', label: this.$i18n.t('alarms.tblActions') }
+            ],
             alarmRulesFields: [
                 { key: 'variableName', label: this.$i18n.t('alarms.tblVariableName'), sortable: false},
                 { key: 'variable', label: this.$i18n.t('alarms.tblVariable'), sortable: false},
                 { key: 'condition', label: this.$i18n.t('alarms.tblCondition'), sortable: false, class: 'text-center'},
                 { key: 'value', label: this.$i18n.t('alarms.tblValue'), sortable: false, class: 'text-center'},
                 { key: 'triggerTime', label: this.$i18n.t('alarms.tblTriggerTime'), sortable: false, class: 'text-center'},
+                { key: 'actions', label: this.$i18n.t('alarms.tblActions') },
                 //{ key: 'status', label: this.$i18n.t('alarms.tblStatus'), sortable: false, class: 'text-center'},
                 { key: 'counter', label: this.$i18n.t('alarms.tblCounter'), sortable: true, class: 'text-center'},
-                { key: 'actions', label: this.$i18n.t('alarms.tblActions') }
+                { key: 'options', label: this.$i18n.t('alarms.tblOptions') }
             ],
             alarmRules: [],
             selectedWidgetIndex: null,
+            newAction: {
+                type: null,
+                variable: null,
+                value: null
+            },
             newRule: {
                 userId: null,
                 deviceId: null,
@@ -125,7 +203,8 @@ export default {
                 variable: null,
                 condition: null,
                 value: null,
-                triggerTime: null
+                triggerTime: null,
+                actions: []
             }
         }
     },
@@ -133,6 +212,86 @@ export default {
         //this.getAlarms();
     },
     methods: {
+        getActuators() {
+            // Filter variables OUTPUT AND INOUTPUT
+            if (this.$store.state.selectedDevice && this.$store.state.selectedDevice.template.widgets) {
+                return this.$store.state.selectedDevice.template.widgets.filter(widget => widget.variableType == 'output' || widget.variableType == 'inoutput');
+            }
+            return [];
+        },
+        isActuator(value) {
+            if (value === 'actuator') {
+                return true;
+            }
+            return false;
+        },
+        addAction() {
+            if (this.newAction.type == null) {
+                this.$notify({
+                    type: 'warning',
+                    icon: 'tim-icons icon-alert-circle-exc',
+                    message: this.$i18n.t('alarms.msgActionTypeInvalid')
+                });
+                return;
+            }
+
+            if (this.newAction.type == 'actuator') {
+                if (this.newAction.variable == null) {
+                    this.$notify({
+                        type: 'warning',
+                        icon: 'tim-icons icon-alert-circle-exc',
+                        message: this.$i18n.t('alarms.msgActionActuatorInvalid')
+                    });
+                    return;
+                }
+                
+                if (this.newAction.value == null) {
+                    this.$notify({
+                        type: 'warning',
+                        icon: 'tim-icons icon-alert-circle-exc',
+                        message: this.$i18n.t('alarms.msgActionValueInvalid')
+                    });
+                    return;
+                }
+                var variable = this.newAction.variable.variable;  
+                var actionExists = this.newRule.actions.filter(a => a.type == 'actuator' && a.variable == variable);
+                if (actionExists.length > 0) {
+                    this.$notify({
+                        type: 'warning',
+                        icon: 'tim-icons icon-alert-circle-exc',
+                        message: this.$i18n.t('alarms.msgActionActuatorExists') + this.newAction.variable.variable
+                    });
+                    return;
+                }
+            }
+
+            if (this.newAction.type == 'notify') {
+                var actionExists = this.newRule.actions.filter(a => a.type == 'notify');
+                if (actionExists.length > 0) {
+                    this.$notify({
+                        type: 'warning',
+                        icon: 'tim-icons icon-alert-circle-exc',
+                        message: this.$i18n.t('alarms.msgActionNotifyExists')
+                    });
+                    return;
+                }
+            }
+
+            var tmp = {
+                type: this.newAction.type,
+                variableName: this.newAction.type == 'actuator' ? this.newAction.variable.variableName : null,
+                variable: this.newAction.type == 'actuator' ? this.newAction.variable.variable : null,
+                value: this.newAction.type == 'actuator' ? this.newAction.value : null
+            };
+            this.newRule.actions.push(tmp);
+
+            this.newAction.type = null;
+            this.newAction.variable= null;
+            this.newAction.value = null;
+        },
+        removeAction(action, index){
+            this.newRule.actions.splice(index, 1);
+        },
         async createAlarm() {
             if (this.selectedWidgetIndex == null) {
                 this.$notify({
@@ -170,6 +329,24 @@ export default {
                 return;
             }
 
+            if (this.newRule.actions == null) {
+                this.$notify({
+                    type: 'warning',
+                    icon: 'tim-icons icon-alert-circle-exc',
+                    message: this.$i18n.t('alarms.msgActionsInvalid')
+                });
+                return;
+            }
+
+            if (this.newRule.actions && this.newRule.actions.length <= 0) {
+                this.$notify({
+                    type: 'warning',
+                    icon: 'tim-icons icon-alert-circle-exc',
+                    message: this.$i18n.t('alarms.msgActionsInvalid')
+                });
+                return;
+            }
+
             var axiosConfig = {
                 headers: {
                     token: this.$store.state.auth.token
@@ -197,6 +374,7 @@ export default {
                     this.newRule.condition = null;
                     this.newRule.value = null;
                     this.newRule.triggerTime = null;
+                    this.newRule.actions = [];
                     this.selectedWidgetIndex = null;
 
                     this.$notify({
@@ -235,7 +413,7 @@ export default {
                     this.$notify({
                         type: 'success',
                         icon: 'tim-icons icon-check-2',
-                        message: item.name + this.$i18n.t('alarms.msgAlarmDeleted')
+                        message: item.variableName + this.$i18n.t('alarms.msgAlarmDeleted')
                     });
                     this.$store.dispatch('getDevices');
                 }
@@ -284,6 +462,9 @@ export default {
         },
         getConditionText(value) {
             return this.conditions.filter(condition => condition.value == value)[0].text;
+        },
+        getActionText(value) {
+            return this.actions.filter(action => action.value == value)[0].text;
         }
     }
 }

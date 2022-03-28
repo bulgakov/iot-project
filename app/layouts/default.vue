@@ -207,6 +207,24 @@ export default {
         docClasses.add("perfect-scrollbar-off");
       }
     },
+    getConditionText(value) {
+        switch (value) {
+            case 'gt' : 
+                return '>' ;
+            case 'eq' : 
+                return '=' ;
+            case 'get': 
+                return '>=';
+            case 'lt' : 
+                return '<' ;
+            case 'let': 
+                return '<=';
+            case 'neq': 
+                return '!=';
+            default:
+                return null;
+        }
+    },
     async getMqttCredentials() {
         var axiosConfig = {
             headers: {
@@ -315,6 +333,7 @@ export default {
                 console.log('MQTT Message -> ' + topic + ' -> ');
                 console.log(message.toString());
 
+                var msgJson = JSON.parse(message);
                 try {
                     var topicArray = topic.split('/');
                     switch (topicArray[3]) {
@@ -322,7 +341,7 @@ export default {
                             this.$notify({
                                 type: 'info',
                                 icon: "tim-icons icon-alert-circle-exc",
-                                message: message.toString()
+                                message: this.$i18n.t('default.msgNotification') + msgJson.variableName + ' ' + this.getConditionText(msgJson.condition) + ' ' + msgJson.value
                             });
                             this.$store.dispatch('getNotifications');
                             return;

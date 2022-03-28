@@ -131,19 +131,6 @@
             processData(data) {
                 try {
                     if (data) {
-                        console.log('received');
-                        console.log(data);
-                        if (this.value != data.value) {
-                            console.log('sent');
-                            var toSend = {
-                                topic: this.config.userId +'/'+  this.config.selectedDevice.deviceId +'/'+ this.config.variable + '/actdata',
-                                msg: {
-                                    value: data.value
-                                }
-                            };
-                            console.log(toSend);
-                            this.$nuxt.$emit('mqtt-sender', toSend);
-                        }
                         this.value = data.value;
                     }
                 } catch (error) {

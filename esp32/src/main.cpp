@@ -9,15 +9,36 @@
 
 // DEVICE CONF
 String deviceId = "47FkrVzyHQ";
-String webhook_pass = "0511b3989373ab94ad4a";
-String webhook_endpoint = "http://192.168.1.100:3001/api/webhooks/auth";
+String webhook_pass = "b7ddb01246c7ce4f0bb3";
+String webhook_endpoint = "https://iot.bulgakov.online:3001/api/webhooks/auth";
+const char* root_ca= \
+"-----BEGIN CERTIFICATE-----\n" \
+"MIIDQTCCAimgAwIBAgITBmyfz5m/jAo54vB4ikPmljZbyjANBgkqhkiG9w0BAQsF\n" \
+"ADA5MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRkwFwYDVQQDExBBbWF6\n" \
+"b24gUm9vdCBDQSAxMB4XDTE1MDUyNjAwMDAwMFoXDTM4MDExNzAwMDAwMFowOTEL\n" \
+"MAkGA1UEBhMCVVMxDzANBgNVBAoTBkFtYXpvbjEZMBcGA1UEAxMQQW1hem9uIFJv\n" \
+"b3QgQ0EgMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALJ4gHHKeNXj\n" \
+"ca9HgFB0fW7Y14h29Jlo91ghYPl0hAEvrAIthtOgQ3pOsqTQNroBvo3bSMgHFzZM\n" \
+"9O6II8c+6zf1tRn4SWiw3te5djgdYZ6k/oI2peVKVuRF4fn9tBb6dNqcmzU5L/qw\n" \
+"IFAGbHrQgLKm+a/sRxmPUDgH3KKHOVj4utWp+UhnMJbulHheb4mjUcAwhmahRWa6\n" \
+"VOujw5H5SNz/0egwLX0tdHA114gk957EWW67c4cX8jJGKLhD+rcdqsq08p8kDi1L\n" \
+"93FcXmn/6pUCyziKrlA4b9v7LWIbxcceVOF34GfID5yHI9Y/QCB/IIDEgEw+OyQm\n" \
+"jgSubJrIqg0CAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n" \
+"AYYwHQYDVR0OBBYEFIQYzIU07LwMlJQuCFmcx7IQTgoIMA0GCSqGSIb3DQEBCwUA\n" \
+"A4IBAQCY8jdaQZChGsV2USggNiMOruYou6r4lK5IpDB/G/wkjUu0yKGX9rbxenDI\n" \
+"U5PMCCjjmCXPI6T53iHTfIUJrU6adTrCC2qJeHZERxhlbI1Bjjt/msv0tadQ1wUs\n" \
+"N+gDS63pYaACbvXy8MWy7Vu33PqUXHeeE6V/Uq2V8viTO96LXFvKWlJbYK8U90vv\n" \
+"o/ufQJVtMVT8QtPHRh8jrdkPSHCa2XV4cdFyQzR1bldZwgJcJmApzyMZFo6IQ6XU\n" \
+"5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy\n" \
+"rqXRfboQnoZsG4q5WTP468SQvvG5\n" \
+"-----END CERTIFICATE-----\n";
 
 // WIFI CONF
-const char *wifiSsid = "YomiYomi";
-const char *wifiPass = "L4C0lumn4";
+const char *wifiSsid = "MYSSID";
+const char *wifiPass = "MYSSIDPASSWORD";
 
 // MQTT CONF
-const char *mqttServer = "192.168.1.100";
+const char *mqttServer = "iot.bulgakov.online";
 const int mqttPort = 1883;
 long mqttLastReconnect = 0;
 long *mqttLastSend;
@@ -46,8 +67,8 @@ long lastStats = 0;
 long lastRead = 0;
 float prevTemperature;
 float prevHumidity;
-const long airValue = 2750; // dry
-const long waterValue = 1118; // wet
+const long airValue = 2430; // dry
+const long waterValue = 1115; // wet
 float prevSoilHumidity;
 long prevCdsPcr;
 bool relayStatus = false;
@@ -141,7 +162,14 @@ bool getMqttCredentials()
     
     String data = "deviceId=" + deviceId + "&password=" + webhook_pass;
     HTTPClient http;
-    http.begin(webhook_endpoint);
+    if (webhook_endpoint.startsWith("https"))
+    {
+        http.begin(webhook_endpoint, root_ca);
+    } else
+    {
+        http.begin(webhook_endpoint);
+    }
+    
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     int resCode = http.POST(data);
 
@@ -429,17 +457,24 @@ void processSensors()
     prevRelayStatus = relayStatus;
 
     // activate Actuators
-    if (soilHumidity <= 65 && !relayStatus)
-    {
-        mqttData["data"]["variables"][5]["last"]["value"] = true;
-        mqttData["data"]["variables"][5]["last"]["save"] = 1;
-    }
+    // THIS IS DONE REMOTELY WITH ALARMS
+    // if (soilHumidity <= 60 && !relayStatus)
+    // {
+    //     mqttData["data"]["variables"][5]["last"]["value"] = true;
+    //     mqttData["data"]["variables"][5]["last"]["save"] = 1;
+        
+    //     relayStatus = true;
+    //     digitalWrite(PIN_RELAY, HIGH);
+    // }
 
-    if (soilHumidity >= 75 && relayStatus)
-    {
-        mqttData["data"]["variables"][5]["last"]["value"] = false;
-        mqttData["data"]["variables"][5]["last"]["save"] = 1;
-    }
+    // if (soilHumidity >= 70 && relayStatus)
+    // {
+    //     mqttData["data"]["variables"][5]["last"]["value"] = false;
+    //     mqttData["data"]["variables"][5]["last"]["save"] = 1;
+
+    //     relayStatus = false;
+    //     digitalWrite(PIN_RELAY, LOW);
+    // }
 }
 
 void processActuators()

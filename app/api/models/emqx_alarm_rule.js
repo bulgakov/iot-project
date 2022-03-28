@@ -11,6 +11,7 @@ const alarmRulesSchema = new Schema({
     value: { type: Number, required: [true] },
     condition: { type: String, required: [true] },
     triggerTime: { type: Number, required: [true] },
+    actions: { type: Array, default: [] },
     status: { type: Boolean, required: [true] },
     counter: { type: Number, required: [true], default: 0 },
     createdTime: { type: Number, required: [true] }

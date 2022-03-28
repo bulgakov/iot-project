@@ -325,7 +325,7 @@ async function deleteSaveRule(userId, deviceId) {
         if (rule) {
             var res = await axios.delete(apiUrl + '/' + rule.emqxRuleId, emqxConfig);
 
-            if (res.status === 200 && res.data.data) {
+            if (res.status === 200 && res.data) {
                 var deleted = await SaveRule.deleteOne({ userId: userId, deviceId: deviceId });
 
                 return deleted;

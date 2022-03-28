@@ -100,6 +100,7 @@ export default {
                         this.user.name = "";
                         this.user.password = "";
                         this.user.email = "";
+                        $nuxt.$router.push("/login");
                         return;
                     }
                 })
