@@ -40,7 +40,8 @@
     "perfect-scrollbar": "^1.5.5",
     "vue-chart-3": "^2.1.2",
     "vue-i18n": "^8.27.0",
-    "vue2-transitions": "^0.3.0"
+    "vue2-transitions": "^0.3.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.3",

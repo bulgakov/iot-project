@@ -133,7 +133,7 @@ async function createAlarmRule(newAlarm) {
         var rawsql = 
             'SELECT username, topic, payload ' + 
             'FROM "' + topic + '" ' + 
-            'WHERE is_not_null(payload.value) AND ' + 
+            'WHERE payload.save = 1 AND is_not_null(payload.value) AND ' + 
             getConditionValue('payload.value', newAlarm.condition, newAlarm.value);
         var actions = [];
 

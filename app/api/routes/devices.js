@@ -4,6 +4,7 @@ const router = express.Router();
 const axios = require('axios');
 const crypto = require("crypto");
 const { checkAuth } = require('../auth.js');
+const { format } = require('date-fns');
 
 // imports
 import Device from '../models/device.js';
@@ -188,10 +189,78 @@ router.get('/data', checkAuth, async (req, res) => {
 
         var timeAgoMs = Date.now() - (timeAgo * 60 * 1000);
 
-        var result = await Data.find({ userId: userId, deviceId: deviceId, variable: variable, 'time': {$gt: timeAgoMs}}).sort({ 'time': 1 });
+        var result = await Data.find({ userId: userId, deviceId: deviceId, variable: variable, 'createdTime': {$gt: timeAgoMs}}).sort({ 'createdTime': 1 });
         resJson.data = result; 
 
         res.json(resJson);
+    } catch (error) {
+        console.log(req.method + ' ' + req.baseUrl + ' ' + req.path + ' ERROR:');
+        console.log(error);
+
+        resJson.status = "failed";
+        resJson.error= error;
+        res.status(500).json(resJson);
+    }
+});
+
+router.get('/export/:deviceId/:variable?', checkAuth, async (req, res) => {
+    var resJson = {
+        status: "success"
+    };
+
+    try {
+        var userId = req.userData._id;
+        var deviceId = req.params.deviceId;
+        var variable = req.params.variable;
+
+        if (deviceId) {
+            var data = [];
+            if (variable && variable.toLowerCase() != 'all') {
+                data = await Data.find({ userId: userId, deviceId: deviceId, variable: variable}).sort({ 'createdTime': 1 });
+            } else {
+                data = await Data.find({ userId: userId, deviceId: deviceId }).sort({ 'createdTime': 1 });
+            }
+
+            var device = await Device.findOne({ deviceId: deviceId });
+            var template = await Template.findOne({ _id: device.templateId });
+            var variables = [];
+
+            template.widgets.forEach(widget => {
+                variables.push((({
+                    variable,
+                    variableName,
+                    variableType,
+                    variableFreq
+                }) => ({
+                    variable,
+                    variableName,
+                    variableType,
+                    variableFreq
+                }))(widget));
+            });
+
+            var result = [];
+
+            data.forEach(d => {
+                var variableObj = variables.filter(v => v.variable == d.variable);
+                result.push({
+                    deviceId: d.deviceId,
+                    deviceName: device.name,
+                    variable: d.variable,
+                    variableName: variableObj.length == 1 ? variableObj[0].variableName : null,
+                    variableType: variableObj.length == 1 ? variableObj[0].variableType : null,
+                    value: d.value,
+                    createdTime: format(d.createdTime, 'yyyy-MM-dd HH:mm:ss')
+                });
+            });
+
+            resJson.data = result; 
+            res.json(resJson);
+        } else {
+            resJson.status = "failed";
+            resJson.error= '';
+            res.status(404).json(resJson);
+        }
     } catch (error) {
         console.log(req.method + ' ' + req.baseUrl + ' ' + req.path + ' ERROR:');
         console.log(error);

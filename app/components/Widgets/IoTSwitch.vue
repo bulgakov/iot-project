@@ -7,7 +7,7 @@
                     :class="[config.icon, getIconClass()]"
                     aria-hidden="true"
                     style="font-size: 30px"></i>
-                <base-switch class="pull-right" @click="sendValue()" :value="value" type="primary" on-text="ON" off-text="OFF" style="margin-top: 10px"></base-switch>
+                <base-switch class="pull-right" @click="sendValue()" :value="value" type="primary" :on-text="$t('widgets.txtOn')" :off-text="$t('widgets.txtOff')" style="margin-top: 10px"></base-switch>
             </h3>
         </div>
     </card>    

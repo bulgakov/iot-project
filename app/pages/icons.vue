@@ -819,7 +819,8 @@
 </template>
 <script>
 export default {
-  name: 'icons'
+  name: 'icons',
+  middleware: "authenticated",
 };
 </script>
 <style></style>

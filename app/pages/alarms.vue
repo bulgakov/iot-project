@@ -122,7 +122,7 @@
                                         'text-dark': !row.item.status
                                     }">
                                 </i>
-                                <base-switch :value="row.item.status" type="primary" on-text="On" off-text="Off" @click="updateStatusRule(row.item, row.index, $event.target)"></base-switch>
+                                <base-switch :value="row.item.status" type="primary" :on-text="$t('widgets.txtOn')" :off-text="$t('widgets.txtOff')" @click="updateStatusRule(row.item, row.index, $event.target)"></base-switch>
                                 <base-button class="btn-link" type="danger" icon size="sm" @click="deleteAlarm(row.item, row.index, $event.target)">
                                     <i class="tim-icons icon-simple-remove"></i>
                                 </base-button>

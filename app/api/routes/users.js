@@ -38,7 +38,7 @@ router.post('/login', async (req, res) => {
         }
         
         user.set('password', undefined, { strict: false});
-        var token = jwt.sign({ userData: user}, 'securePasswordHere', { expiresIn: 60 * 60 * 24 * 30 });
+        var token = jwt.sign({ userData: user}, process.env.API_SECRET, { expiresIn: Number(process.env.API_TOKEN_LIFETIME) });
         resJson.token = token;
         resJson.userData = user;
 

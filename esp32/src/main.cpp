@@ -67,8 +67,8 @@ long lastStats = 0;
 long lastRead = 0;
 float prevTemperature;
 float prevHumidity;
-const long airValue = 2430; // dry
-const long waterValue = 1115; // wet
+const long airValue = 4095; // dry
+const long waterValue = 848; // wet
 float prevSoilHumidity;
 long prevCdsPcr;
 bool relayStatus = false;
@@ -406,7 +406,7 @@ void processSensors()
 
     // get Soil Humidity
     long soilSensor = analogRead(PIN_SOIL_SENSOR);
-    long soilHumidity = map(soilSensor, airValue, waterValue, 0, 100);
+    long soilHumidity = map(constrain(soilSensor, waterValue, airValue), airValue, waterValue, 0, 100);
 
     // get Photoresistor
     long cdsValue = analogRead(PIN_PHOTOCELL); //value between 0 and 4095

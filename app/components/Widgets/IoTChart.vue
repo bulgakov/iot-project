@@ -2,7 +2,7 @@
     <card type="chart">
         <template slot="header">
             <h5 class="card-category pull-right">
-                {{ getTimeAgo((nowTime - time) / 1000) }} ago
+                {{$t('widgets.txtAgo', { time: getTimeAgo((nowTime - time) / 1000)})}}
             </h5>
             <h5 class="card-category">
                 {{ config.selectedDevice.name }} - {{ config.variableName }}
@@ -288,19 +288,19 @@ export default {
                 seconds = 0;
             }
             if (seconds < 59) {
-                return seconds.toFixed() + ' secs';
+                return seconds.toFixed() + this.$i18n.t('widgets.txtSecs');
             }
             if (seconds > 59 && seconds <= 3600) {
                 seconds = seconds / 60;
-                return seconds.toFixed() + ' min';
+                return seconds.toFixed() + this.$i18n.t('widgets.txtMin');
             }
             if (seconds > 3600 && seconds <= 86400) {
                 seconds = seconds / 3600;
-                return seconds.toFixed() + ' hour';
+                return seconds.toFixed() + this.$i18n.t('widgets.txtHour');
             }
             if (seconds > 86400) {
                 seconds = seconds / 86400;
-                return seconds.toFixed() + ' day';
+                return seconds.toFixed() + this.$i18n.t('widgets.txtDay');
             }
         },
         processReceivedData(data) {
@@ -351,7 +351,7 @@ export default {
                         res.data.data.forEach((d) => {
                             this.chartData.datasets[0].data.push(
                                 {
-                                    x: d.createdTime + new Date().getTimezoneOffset() * 60 * 1000 * -1,
+                                    x: d.createdTime, //+ new Date().getTimezoneOffset() * 60 * 1000 * -1,
                                     y: d.value,
                                 }
                             );
